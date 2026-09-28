@@ -1,3 +1,6 @@
+PALABRAS_SALIDA = ("salir", "adios", "adiós", "ok bye", "hasta luego", "nos vemos", "nos bemos", "gracias")
+
+
 def main():
     tutor = TutorDePython()
     iniciar_conversacion(tutor)
@@ -9,35 +12,40 @@ class TutorDePython:
         self.temas_dominados = {}
         self.temas = {
             "variables": {
-                "explicacion": "Espacios con nombre para guardar datos.",
-                "pregunta": "¿Qué símbolo se usa para asignar un valor en Python?",
+                "explicacion": "Una variable es un nombre asociado a un valor que el programa puede usar. En Python se crea al asignarle un valor, por ejemplo, edad = 12 o nombre = 'Ana'. El signo igual asigna el valor; no significa que ambos lados sean iguales. Los nombres pueden contener letras, números y guion bajo, pero no empezar con un número. Python determina el tipo del valor automáticamente, y una variable puede recibir otro valor más adelante.",
+                "uso": "Se utiliza para guardar y reutilizar datos mientras el programa se ejecuta, como nombres, edades, resultados o valores que cambian. Así puedes consultar y actualizar esos datos sin repetirlos en el código.",
+                "pregunta": "¿Qué símbolo se usa holapara asignar un valor en Python?",
                 "numero": 1,
                 "respuesta": "=",
                 "tipo": "texto",
             },
             "lista": {
-                "explicacion": "Colecciones ordenadas y modificables.",
+                "explicacion": "Una lista guarda varios elementos en un orden definido y permite modificarlos después. Se escribe entre corchetes, por ejemplo, frutas = ['manzana', 'pera']. Las posiciones empiezan en 0, así que frutas[0] es 'manzana'. Puedes cambiar un elemento, agregar otros con append() y consultar cuántos contiene con len(). Una lista también puede guardar valores de distintos tipos.",
+                "uso": "Se utiliza para reunir datos relacionados cuando necesitas conservar su orden y poder agregar, quitar o modificar elementos, por ejemplo, una lista de tareas, nombres o productos.",
                 "pregunta": "¿En qué posición está el primer elemento de una lista?",
                 "numero": 2,
                 "respuesta": "0",
                 "tipo": "numero",
             },
             "tuplas": {
-                "explicacion": "Colecciones ordenadas e inmutables.",
+                "explicacion": "Una tupla guarda varios elementos en un orden definido, pero no permite cambiar sus elementos después de crearla. Normalmente se escribe entre paréntesis, por ejemplo, coordenadas = (3, 8). Sus posiciones también empiezan en 0 y se consultan como en una lista. Una tupla de un solo elemento necesita una coma, por ejemplo (5,). Se usa cuando los datos deben permanecer fijos.",
+                "uso": "Se utiliza para agrupar datos relacionados que no deberían cambiar, como coordenadas, dimensiones o valores fijos. También permite devolver varios valores juntos desde una función.",
                 "pregunta": "¿Se pueden modificar las tuplas? (si/no)",
                 "numero": 3,
                 "respuesta": "no",
                 "tipo": "texto",
             },
             "clase": {
-                "explicacion": "Plantilla para crear objetos.",
+                "explicacion": "Una clase es una plantilla que define los datos y acciones que tendrán sus objetos. Se declara con la palabra class y suele incluir un método __init__ para inicializar cada objeto. Los datos se guardan como atributos y las acciones se escriben como métodos. Después se crean instancias llamando a la clase, por ejemplo, mi_objeto = MiClase().",
+                "uso": "Se utiliza para crear objetos que comparten estructura y comportamiento, por ejemplo, representar estudiantes con nombre y edad, y métodos para mostrar o modificar esos datos.",
                 "pregunta": "¿Qué palabra clave se usa para definir una clase?",
                 "numero": 4,
                 "respuesta": "class",
                 "tipo": "texto",
             },
             "git": {
-                "explicacion": "Comandos para gestionar repositorios y cambios.",
+                "explicacion": "Git es un sistema de control de versiones que registra cambios en los archivos de un proyecto. Un repositorio contiene esos archivos y su historial. git status muestra el estado, git add prepara cambios y git commit los guarda en el historial con un mensaje. git push envía commits a un repositorio remoto y git pull descarga cambios. Así puedes revisar versiones y colaborar sin perder el trabajo anterior.",
+                "uso": "Se utiliza para guardar y revisar el historial de cambios de un proyecto, recuperar versiones anteriores y colaborar con otras personas usando repositorios remotos.",
                 "pregunta": "¿Qué comando de Git registra un commit?",
                 "numero": 5,
                 "respuesta": "commit",
@@ -55,6 +63,18 @@ class TutorDePython:
     def explicar_concepto(self, mensaje_normalizado):
         for tema, info in self.temas.items():
             if tema in mensaje_normalizado or tema.rstrip("s") in mensaje_normalizado:
+                frases_de_uso = (
+                    "para que se utiliza",
+                    "para que se utilizan",
+                    "para qué se utiliza",
+                    "para qué se utilizan",
+                    "para que sirve",
+                    "para que sirven",
+                    "para qué sirve",
+                    "para qué sirven",
+                )
+                if any(frase in mensaje_normalizado for frase in frases_de_uso):
+                    return info["uso"]
                 return info["explicacion"]
         temas_disponibles = ", ".join(self.temas.keys())
         return f"No tengo ese tema. Puedo explicar: {temas_disponibles}."
@@ -62,7 +82,7 @@ class TutorDePython:
     def hacer_pregunta(self, mensaje_normalizado):
         tema_encontrado = None
         for tema in self.temas:
-            if tema in mensaje_normalizado:
+            if tema in mensaje_normalizado or tema.rstrip("s") in mensaje_normalizado:
                 tema_encontrado = tema
                 break
         if tema_encontrado is None:
@@ -71,7 +91,8 @@ class TutorDePython:
         info = self.temas[tema_encontrado]
         respuesta_estudiante = input(f"{info['pregunta']} ")
         if info["tipo"] == "numero":
-            respuesta_numero = int(respuesta_estudiante)
+            respuesta_limpia = respuesta_estudiante.strip().lower()
+            respuesta_numero = 0 if respuesta_limpia == "cero" else int(respuesta_limpia)
             es_correcta = respuesta_numero == int(info["respuesta"])
         else:
             es_correcta = respuesta_estudiante.strip().lower() == info["respuesta"]
@@ -92,7 +113,7 @@ class TutorDePython:
     def responder(self, mensaje):
         self.historial.append(("estudiante", mensaje))
         mensaje_normalizado = mensaje.lower()
-        if "adios" in mensaje_normalizado or "salir" in mensaje_normalizado:
+        if any(palabra in mensaje_normalizado for palabra in PALABRAS_SALIDA):
             respuesta = "Hasta luego! Sigue practicando."
         elif "hola" in mensaje_normalizado or "buenas" in mensaje_normalizado:
             respuesta = "Hola! Soy tu tutor de Python."
@@ -128,7 +149,7 @@ def iniciar_conversacion(tutor):
             break
         respuesta = tutor.responder(mensaje)
         print(f"Tutor: {respuesta}\n")
-        if "adios" in mensaje.lower() or "salir" in mensaje.lower():
+        if any(palabra in mensaje.lower() for palabra in PALABRAS_SALIDA):
             break
     print("--- Historial de la conversacion ---")
     tutor.mostrar_historial()
