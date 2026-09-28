@@ -8,13 +8,42 @@ def main():
 class TutorDePython:
     def __init__(self):
         self.historial = []
+        self.temas_dominados = {}
         self.temas = {
-            "variables": {"explicacion": "Espacios con nombre para guardar datos."},
-            "listas": {"explicacion": "Colecciones ordenadas y modificables."},
-            "tuplas": {"explicacion": "Colecciones ordenadas e inmutables."},
-            "clase": {"explicacion": "Plantilla para crear objetos."},
-            "metodos_de_git": {
-                "explicacion": "Comandos para gestionar repositorios y cambios."
+            "variables": {
+                "explicacion": "Espacios con nombre para guardar datos.",
+                "pregunta": "¿Qué símbolo se usa para asignar un valor en Python?",
+                "numero": 1,
+                "respuesta": "=",
+                "tipo": "texto",
+            },
+            "lista": {
+                "explicacion": "Colecciones ordenadas y modificables.",
+                "pregunta": "¿En qué posición está el primer elemento de una lista?",
+                "numero": 2,
+                "respuesta": "0",
+                "tipo": "numero",
+            },
+            "tuplas": {
+                "explicacion": "Colecciones ordenadas e inmutables.",
+                "pregunta": "¿Se pueden modificar las tuplas? (si/no)",
+                "numero": 3,
+                "respuesta": "no",
+                "tipo": "texto",
+            },
+            "clase": {
+                "explicacion": "Plantilla para crear objetos.",
+                "pregunta": "¿Qué palabra clave se usa para definir una clase?",
+                "numero": 4,
+                "respuesta": "class",
+                "tipo": "texto",
+            },
+            "git": {
+                "explicacion": "Comandos para gestionar repositorios y cambios.",
+                "pregunta": "¿Qué comando de Git registra un commit?",
+                "numero": 5,
+                "respuesta": "commit",
+                "tipo": "texto",
             },
         }
         self.historiar()
@@ -32,6 +61,27 @@ class TutorDePython:
         temas_disponibles = ", ".join(self.temas.keys())
         return f"No tengo ese tema. Puedo explicar: {temas_disponibles}."
 
+    def hacer_pregunta(self, mensaje_normalizado):
+        tema_encontrado = None
+        for tema in self.temas:
+            if tema in mensaje_normalizado:
+                tema_encontrado = tema
+                break
+        if tema_encontrado is None:
+            temas_disponibles = ", ".join(self.temas.keys())
+            return f"Sobre que tema? Puedo preguntar sobre: {temas_disponibles}."
+        info = self.temas[tema_encontrado]
+        respuesta_estudiante = input(f"{info['pregunta']} ")
+        if info["tipo"] == "numero":
+            respuesta_numero = int(respuesta_estudiante)
+            es_correcta = respuesta_numero == int(info["respuesta"])
+        else:
+            es_correcta = respuesta_estudiante.strip().lower() == info["respuesta"]
+        self.temas_dominados[tema_encontrado] = es_correcta
+        if es_correcta:
+            return "Correcto!"
+        return f"No es correcto. La respuesta era: {info['respuesta']}."
+
     def responder(self, mensaje):
         self.historial.append(("estudiante", mensaje))
         mensaje_normalizado = mensaje.lower()
@@ -39,6 +89,8 @@ class TutorDePython:
             respuesta = "Hasta luego! Sigue practicando."
         elif "hola" in mensaje_normalizado or "buenas" in mensaje_normalizado:
             respuesta = "Hola! Soy tu tutor de Python."
+        elif "pregunta" in mensaje_normalizado or "quiz" in mensaje_normalizado:
+            respuesta = self.hacer_pregunta(mensaje_normalizado)
         elif "explica" in mensaje_normalizado or "explicame" in mensaje_normalizado:
             respuesta = self.explicar_concepto(mensaje_normalizado)
         else:
