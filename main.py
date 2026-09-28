@@ -10,11 +10,14 @@ class TutorDePython:
     def __init__(self):
         self.historial = []
         self.temas_dominados = {}
+        self.intentos_positivos = 0
+        self.intentos_fallidos = 0
+        self.quiz_terminado = False
         self.temas = {
             "variables": {
                 "explicacion": "Una variable es un nombre asociado a un valor que el programa puede usar. En Python se crea al asignarle un valor, por ejemplo, edad = 12 o nombre = 'Ana'. El signo igual asigna el valor; no significa que ambos lados sean iguales. Los nombres pueden contener letras, números y guion bajo, pero no empezar con un número. Python determina el tipo del valor automáticamente, y una variable puede recibir otro valor más adelante.",
                 "uso": "Se utiliza para guardar y reutilizar datos mientras el programa se ejecuta, como nombres, edades, resultados o valores que cambian. Así puedes consultar y actualizar esos datos sin repetirlos en el código.",
-                "pregunta": "¿Qué símbolo se usa holapara asignar un valor en Python?",
+                "pregunta": "¿Qué símbolo se usa para asignar un valor en Python?",
                 "numero": 1,
                 "respuesta": "=",
                 "tipo": "texto",
@@ -89,17 +92,61 @@ class TutorDePython:
             temas_disponibles = ", ".join(self.temas.keys())
             return f"Sobre que tema? Puedo preguntar sobre: {temas_disponibles}."
         info = self.temas[tema_encontrado]
-        respuesta_estudiante = input(f"{info['pregunta']} ")
-        if info["tipo"] == "numero":
-            respuesta_limpia = respuesta_estudiante.strip().lower()
-            respuesta_numero = 0 if respuesta_limpia == "cero" else int(respuesta_limpia)
-            es_correcta = respuesta_numero == int(info["respuesta"])
-        else:
-            es_correcta = respuesta_estudiante.strip().lower() == info["respuesta"]
-        self.temas_dominados[tema_encontrado] = es_correcta
-        if es_correcta:
-            return "Correcto!"
-        return f"No es correcto. La respuesta era: {info['respuesta']}."
+        for intento in range(1, 4):
+            respuesta_estudiante = input(f"{info['pregunta']} ")
+            if info["tipo"] == "numero":
+                try:
+                    respuesta_numero = int(respuesta_estudiante)
+                    es_correcta = respuesta_numero == int(info["respuesta"])
+                except ValueError:
+                    es_correcta = False
+            else:
+                es_correcta = respuesta_estudiante.strip().lower() == info["respuesta"]
+
+            if es_correcta:
+                self.intentos_positivos += 1
+                self.temas_dominados[tema_encontrado] = True
+                return "Correcto!"
+
+            self.intentos_fallidos += 1
+            if intento < 3:
+                print("Intentalo nuevamente.")
+                continue
+
+            self.temas_dominados[tema_encontrado] = False
+            self.quiz_terminado = True
+            return (
+                f"Intentos positivos: {self.intentos_positivos}. "
+                f"Intentos fallidos: {self.intentos_fallidos}. "
+                "Hasta luego, gracias por tu deseo de aprender Python."
+            )
+
+    def hacer_quiz(self):
+        self.intentos_positivos = 0
+        self.intentos_fallidos = 0
+        self.quiz_terminado = False
+        resultados = []
+        for tema in self.temas:
+            try:
+                resultado = self.hacer_pregunta(tema)
+            except EOFError:
+                if resultados:
+                    return (
+                        "Quiz interrumpido.\n"
+                        + "\n".join(resultados)
+                        + "\n"
+                        + self.mostrar_progreso()
+                    )
+                return "Quiz interrumpido antes de responder."
+            resultados.append(f"{tema}: {resultado}")
+            if self.quiz_terminado:
+                return "\n".join(resultados)
+        return (
+            "Quiz finalizado.\n"
+            + "\n".join(resultados)
+            + "\n"
+            + self.mostrar_progreso()
+        )
 
     def mostrar_progreso(self):
         if not self.temas_dominados:
@@ -119,8 +166,29 @@ class TutorDePython:
             respuesta = "Hola! Soy tu tutor de Python."
         elif "progreso" in mensaje_normalizado:
             respuesta = self.mostrar_progreso()
-        elif "pregunta" in mensaje_normalizado or "quiz" in mensaje_normalizado:
-            respuesta = self.hacer_pregunta(mensaje_normalizado)
+        elif "quiz" in mensaje_normalizado:
+            tema_especifico = any(
+                tema in mensaje_normalizado or tema.rstrip("s") in mensaje_normalizado
+                for tema in self.temas
+            )
+            if tema_especifico:
+                self.intentos_positivos = 0
+                self.intentos_fallidos = 0
+                self.quiz_terminado = False
+                try:
+                    respuesta = self.hacer_pregunta(mensaje_normalizado)
+                except EOFError:
+                    respuesta = "Quiz interrumpido antes de responder."
+            else:
+                respuesta = self.hacer_quiz()
+        elif "pregunta" in mensaje_normalizado:
+            self.intentos_positivos = 0
+            self.intentos_fallidos = 0
+            self.quiz_terminado = False
+            try:
+                respuesta = self.hacer_pregunta(mensaje_normalizado)
+            except EOFError:
+                respuesta = "Pregunta interrumpida antes de responder."
         elif (
             "explica" in mensaje_normalizado
             or "explicame" in mensaje_normalizado
@@ -149,7 +217,9 @@ def iniciar_conversacion(tutor):
             break
         respuesta = tutor.responder(mensaje)
         print(f"Tutor: {respuesta}\n")
-        if any(palabra in mensaje.lower() for palabra in PALABRAS_SALIDA):
+        if tutor.quiz_terminado or any(
+            palabra in mensaje.lower() for palabra in PALABRAS_SALIDA
+        ):
             break
     print("--- Historial de la conversacion ---")
     tutor.mostrar_historial()
