@@ -1,8 +1,6 @@
 def main():
-    print("Hello from tutor-python!")
     tutor = TutorDePython()
-    print(tutor.responder("explicame variable"))
-    print(tutor.responder("explicame algo que no existe"))
+    iniciar_conversacion(tutor)
 
 
 class TutorDePython:
@@ -89,6 +87,8 @@ class TutorDePython:
         total = len(self.temas_dominados)
         return f"Has respondido correctamente {correctas} de {total} temas intentados."
 
+    
+
     def responder(self, mensaje):
         self.historial.append(("estudiante", mensaje))
         mensaje_normalizado = mensaje.lower()
@@ -100,12 +100,39 @@ class TutorDePython:
             respuesta = self.mostrar_progreso()
         elif "pregunta" in mensaje_normalizado or "quiz" in mensaje_normalizado:
             respuesta = self.hacer_pregunta(mensaje_normalizado)
-        elif "explica" in mensaje_normalizado or "explicame" in mensaje_normalizado:
+        elif (
+            "explica" in mensaje_normalizado
+            or "explicame" in mensaje_normalizado
+            or any(
+                tema in mensaje_normalizado or tema.rstrip("s") in mensaje_normalizado
+                for tema in self.temas
+            )
+        ):
             respuesta = self.explicar_concepto(mensaje_normalizado)
         else:
             respuesta = "Todavia no se responder eso."
         self.historial.append(("tutor", respuesta))
         return respuesta
+
+    def mostrar_historial(self):
+            for quien, texto in self.historial:
+                print(f"{quien}: {texto}")
+
+
+def iniciar_conversacion(tutor):
+    print("Tutor de Python - escribe 'salir' para terminar\n")
+    while True:
+        try:
+            mensaje = input("Tu: ")
+        except EOFError:
+            break
+        respuesta = tutor.responder(mensaje)
+        print(f"Tutor: {respuesta}\n")
+        if "adios" in mensaje.lower() or "salir" in mensaje.lower():
+            break
+    print("--- Historial de la conversacion ---")
+    tutor.mostrar_historial()
+
 
 if __name__ == "__main__":
     main()
