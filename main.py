@@ -82,6 +82,13 @@ class TutorDePython:
             return "Correcto!"
         return f"No es correcto. La respuesta era: {info['respuesta']}."
 
+    def mostrar_progreso(self):
+        if not self.temas_dominados:
+            return "Todavia no has respondido ninguna pregunta."
+        correctas = sum(1 for v in self.temas_dominados.values() if v)
+        total = len(self.temas_dominados)
+        return f"Has respondido correctamente {correctas} de {total} temas intentados."
+
     def responder(self, mensaje):
         self.historial.append(("estudiante", mensaje))
         mensaje_normalizado = mensaje.lower()
@@ -89,6 +96,8 @@ class TutorDePython:
             respuesta = "Hasta luego! Sigue practicando."
         elif "hola" in mensaje_normalizado or "buenas" in mensaje_normalizado:
             respuesta = "Hola! Soy tu tutor de Python."
+        elif "progreso" in mensaje_normalizado:
+            respuesta = self.mostrar_progreso()
         elif "pregunta" in mensaje_normalizado or "quiz" in mensaje_normalizado:
             respuesta = self.hacer_pregunta(mensaje_normalizado)
         elif "explica" in mensaje_normalizado or "explicame" in mensaje_normalizado:
